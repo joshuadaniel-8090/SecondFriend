@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -15,11 +16,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, Stethoscope, User } from 'lucide-react';
+import { LogIn, LogOut, Stethoscope, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Header() {
-  const { userData } = useAuth();
+  const { user, userData } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -49,31 +50,40 @@ export default function Header() {
           <h1 className="font-headline text-2xl font-bold">Second Friend</h1>
         </Link>
         <div className="flex flex-1 items-center justify-end space-x-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                <Avatar className="h-9 w-9">
-                  <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${userData?.name}`} alt={userData?.name || 'User'} />
-                  <AvatarFallback>{getInitials(userData?.name)}</AvatarFallback>
-                </Avatar>
+          {user && userData ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${userData?.name}`} alt={userData?.name || 'User'} />
+                    <AvatarFallback>{getInitials(userData?.name)}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{userData?.name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {userData?.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link href="/login">
+              <Button>
+                <LogIn className="mr-2 h-4 w-4" />
+                Login
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{userData?.name}</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {userData?.email}
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </Link>
+          )}
         </div>
       </div>
     </header>
