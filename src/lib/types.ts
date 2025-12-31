@@ -1,3 +1,4 @@
+
 import type { Timestamp } from 'firebase/firestore';
 
 export type UserRole = 'student' | 'counsellor' | 'admin';
@@ -46,5 +47,15 @@ export interface Message {
   text: string;
   senderId: string;
   senderName: string;
+  createdAt: Timestamp;
+}
+
+export interface Call {
+  id: string;
+  studentId: string;
+  status: 'ringing' | 'connected' | 'ended';
+  offer?: RTCSessionDescriptionInit;
+  answer?: RTCSessionDescriptionInit;
+  endedBy?: string;
   createdAt: Timestamp;
 }

@@ -74,6 +74,9 @@ import {
   Edit,
   X,
   Shield,
+  UserPlus,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -92,7 +95,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { UserPlus } from 'lucide-react';
 
 // Main Admin Page Component
 export default function AdminPage() {
@@ -770,6 +772,7 @@ const userFormSchema = z.object({
 
 
 function AddUserDialog({ isOpen, setIsOpen, toast, colleges, defaultRole }: { isOpen: boolean, setIsOpen: (o: boolean) => void, toast: any, colleges: College[], defaultRole: UserRole }) {
+  const [showPassword, setShowPassword] = React.useState(false);
   const form = useForm<z.infer<typeof userFormSchema>>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
@@ -883,7 +886,29 @@ function AddUserDialog({ isOpen, setIsOpen, toast, colleges, defaultRole }: { is
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} />
+                         <div className="relative">
+                          <Input
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder="••••••••"
+                            {...field}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute inset-y-0 right-0 h-full px-3"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                            <span className="sr-only">
+                              {showPassword ? 'Hide password' : 'Show password'}
+                            </span>
+                          </Button>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

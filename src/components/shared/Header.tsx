@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase/config';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -20,13 +20,15 @@ import {
   DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogIn, LogOut, Stethoscope, User, Moon, Sun, Monitor, LayoutDashboard } from 'lucide-react';
+import { LogIn, LogOut, User, Moon, Sun, Monitor, LayoutDashboard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from 'next-themes';
+import Logo from './Logo';
 
 export default function Header() {
   const { user, userData } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
   const { setTheme } = useTheme();
 
@@ -48,22 +50,18 @@ export default function Header() {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
 
+  const isHomePage = pathname === '/';
+
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-card">
       <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
         <Link href="/" className="flex items-center gap-2 text-primary">
-          <Stethoscope size={28} />
-          <h1 className="font-headline text-2xl font-bold">Second Friend</h1>
+          <Logo className="h-7 w-7 text-primary" />
+          {isHomePage && <h1 className="font-headline text-2xl font-bold">Second Friend</h1>}
         </Link>
         <div className="flex flex-1 items-center justify-end space-x-4">
           {user && userData ? (
             <>
-              <Link href="/auth-redirect">
-                <Button variant="ghost">
-                  <LayoutDashboard className="mr-2 h-4 w-4" />
-                  Dashboard
-                </Button>
-              </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-9 w-9 rounded-full">
@@ -83,6 +81,10 @@ export default function Header() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                   <DropdownMenuItem onClick={() => router.push('/auth-redirect')} className="cursor-pointer">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>Dashboard</span>
+                  </DropdownMenuItem>
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger>
                       <Sun className="mr-2 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />

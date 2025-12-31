@@ -28,9 +28,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Stethoscope } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import type { AppUser } from '@/lib/types';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Logo from '@/components/shared/Logo';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -42,6 +43,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -100,7 +102,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="mb-8 flex items-center gap-2 text-primary">
-        <Stethoscope size={40} />
+        <Logo className="h-10 w-10 text-primary" />
         <h1 className="font-headline text-4xl font-bold">Second Friend</h1>
       </div>
       <Card className="w-full max-w-sm">
@@ -153,7 +155,29 @@ export default function LoginPage() {
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} />
+                        <div className="relative">
+                          <Input
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder="••••••••"
+                            {...field}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute inset-y-0 right-0 h-full px-3"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                            <span className="sr-only">
+                              {showPassword ? 'Hide password' : 'Show password'}
+                            </span>
+                          </Button>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -169,6 +193,11 @@ export default function LoginPage() {
             Don&apos;t have an account?{' '}
             <Link href="/signup" className="underline">
               Sign up
+            </Link>
+          </div>
+          <div className="mt-4 text-center text-sm">
+            <Link href="/" className="underline flex items-center justify-center gap-1">
+              <ArrowLeft className="h-4 w-4" /> Go to home page
             </Link>
           </div>
         </CardContent>

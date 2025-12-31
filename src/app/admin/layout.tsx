@@ -6,7 +6,8 @@ import AdminLogin from '@/components/auth/AdminLogin';
 import AdminSignup from '@/components/auth/AdminSignup';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
 import { Button } from '@/components/ui/button';
-import { Stethoscope } from 'lucide-react';
+import Header from '@/components/shared/Header';
+import Logo from '@/components/shared/Logo';
 
 type AuthView = 'welcome' | 'login' | 'signup';
 
@@ -26,7 +27,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
         <div className="mb-8 flex items-center gap-2 text-primary">
-            <Stethoscope size={40} />
+            <Logo className="h-10 w-10 text-primary" />
             <h1 className="font-headline text-4xl font-bold">Second Friend</h1>
         </div>
         
@@ -49,6 +50,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <Header />
       <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
         {children}
       </main>

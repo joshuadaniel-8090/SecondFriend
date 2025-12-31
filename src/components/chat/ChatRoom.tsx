@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -14,9 +15,12 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
-import { Send, XCircle, ArrowLeft, MessageSquare } from 'lucide-react';
+import { Send, ArrowLeft, MessageSquare, Phone, PhoneOff, PhoneIncoming, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useWebRTC } from '@/hooks/useWebRTC';
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '../ui/alert-dialog';
+import CallView from './CallView';
 
 interface ChatRoomProps {
   sessionId: string;
@@ -32,6 +36,18 @@ export default function ChatRoom({ sessionId }: ChatRoomProps) {
   const [loading, setLoading] = React.useState(true);
   const [newMessage, setNewMessage] = React.useState('');
   const scrollAreaViewportRef = React.useRef<HTMLDivElement>(null);
+  const remoteVideoRef = React.useRef<HTMLAudioElement>(null);
+
+  const {
+    startCall,
+    endCall,
+    acceptCall,
+    rejectCall,
+    call,
+    remoteStream,
+    toggleMute,
+    isMuted,
+  } = useWebRTC(sessionId, user?.uid, remoteVideoRef);
 
   React.useEffect(() => {
     // Session listener
@@ -63,6 +79,9 @@ export default function ChatRoom({ sessionId }: ChatRoomProps) {
     return () => {
       unsubscribeSession();
       unsubscribeMessages();
+      if (call) {
+        endCall();
+      }
     };
   }, [sessionId, user, router, toast]);
   
@@ -86,8 +105,9 @@ export default function ChatRoom({ sessionId }: ChatRoomProps) {
 
     setNewMessage('');
   };
-
-  const handleCloseSession = async () => {
+  
+    const handleCloseSession = async () => {
+    if (!sessionId) return;
     try {
       await updateDoc(doc(db, 'sessions', sessionId), {
         status: 'closed',
@@ -99,39 +119,157 @@ export default function ChatRoom({ sessionId }: ChatRoomProps) {
        toast({ variant: 'destructive', title: 'Error', description: 'Could not close the session.' });
     }
   };
-  
+
   const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
   if (loading) return <div className="flex-grow flex items-center justify-center"><LoadingSpinner /></div>;
   if (!session) return <div className="flex-grow flex items-center justify-center"><p>Session not found or you are not authorized.</p></div>;
 
   const otherUserName = user?.uid === session.studentId ? session.counsellorName : session.studentName;
+  const isStudent = userData?.role === 'student';
+  const isCounsellor = userData?.role === 'counsellor';
+  const isSessionActive = session?.status === 'active';
+  
+  const isCallRinging = call?.status === 'ringing';
+  const isCallConnected = call?.status === 'connected';
+  const isMyCall = call?.studentId === user?.uid;
+
+  const IncomingCallModal = () => {
+    if (!isCallRinging || isMyCall) return null;
+
+    return (
+      <AlertDialog open={true}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-headline text-center text-2xl">Incoming Call</AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              You have an incoming call from {session.studentName}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex justify-center items-center py-4">
+              <Avatar className="h-24 w-24">
+                <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${session.studentName}`} alt={session.studentName} />
+                <AvatarFallback className="text-3xl">{getInitials(session.studentName || 'S')}</AvatarFallback>
+              </Avatar>
+          </div>
+          <AlertDialogFooter className="sm:justify-center gap-4">
+            <Button onClick={rejectCall} variant="destructive" size="lg" className="flex-1">
+              <PhoneOff className="mr-2 h-5 w-5" /> Decline
+            </Button>
+            <Button onClick={acceptCall} size="lg" className="bg-green-500 hover:bg-green-600 flex-1">
+               <PhoneIncoming className="mr-2 h-5 w-5" /> Accept
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    )
+  }
+
+  const CallButton = () => {
+     if (isCallConnected || isCallRinging) return null;
+     if (isStudent && session.status === 'active') {
+      return (
+        <Button variant="outline" size="sm" onClick={startCall}>
+          <Phone className="sm:mr-2 h-4 w-4" /> <span className="hidden sm:inline">Start Call</span>
+        </Button>
+      );
+    }
+    return null;
+  }
+
+  if (isCallConnected && session) {
+    return (
+        <CallView 
+            sessionTitle={session.title}
+            otherUserName={otherUserName || 'User'}
+            isMuted={isMuted}
+            onToggleMute={toggleMute}
+            onEndCall={endCall}
+        />
+    )
+  }
+
 
   return (
     <div className="flex flex-col h-full w-full max-w-4xl mx-auto">
+      <IncomingCallModal />
       <Card className="flex-grow flex flex-col">
-        <CardHeader className="flex flex-row items-center justify-between border-b">
-          <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                  <ArrowLeft />
-                  <span className="sr-only">Go back</span>
-              </Button>
-              <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${otherUserName}`} alt={otherUserName} />
-                    <AvatarFallback>{getInitials(otherUserName || 'U')}</AvatarFallback>
-                  </Avatar>
-                  <div className="space-y-1">
-                      <CardTitle className="font-headline text-lg">{otherUserName}</CardTitle>
-                      <CardDescription className="text-xs">{session.title}</CardDescription>
-                  </div>
+        <CardHeader className="flex flex-row items-center justify-between border-b p-3 sm:p-4">
+          <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+             <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
+                    <ArrowLeft className="h-5 w-5" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Leave this page?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      If you have an active call, it will be disconnected. Are you sure you want to go back?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Stay</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        if (call) endCall();
+                        router.back();
+                      }}
+                    >
+                      Leave
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Avatar>
+                <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${otherUserName}`} alt={otherUserName} />
+                <AvatarFallback>{getInitials(otherUserName || 'U')}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <CardTitle className="font-headline text-base sm:text-lg truncate">{otherUserName}</CardTitle>
+                <CardDescription className="text-xs truncate">{session.title}</CardDescription>
               </div>
+            </div>
           </div>
-          {userData?.role === 'counsellor' && session.status === 'active' && (
-            <Button variant="outline" size="sm" onClick={handleCloseSession}>
-              <XCircle className="mr-2 h-4 w-4" /> Close Session
-            </Button>
-          )}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {isCallRinging && isMyCall && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground animate-pulse">Ringing...</span>
+                <Button variant="destructive" size="sm" onClick={endCall}>
+                  Cancel Request
+                </Button>
+              </div>
+            )}
+            <CallButton />
+            {isCounsellor && isSessionActive && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
+                    <XCircle className="h-5 w-5" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently end the session for both you and the student. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleCloseSession}
+                      className="bg-destructive hover:bg-destructive/90"
+                    >
+                      End Session
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="flex-grow p-0 overflow-hidden">
           <ScrollArea className="h-full">
@@ -173,8 +311,9 @@ export default function ChatRoom({ sessionId }: ChatRoomProps) {
                 onChange={e => setNewMessage(e.target.value)}
                 placeholder="Type a message..."
                 autoComplete="off"
+                disabled={!!call}
               />
-              <Button type="submit" size="icon">
+              <Button type="submit" size="icon" disabled={!!call}>
                 <Send className="h-4 w-4" />
                 <span className="sr-only">Send</span>
               </Button>
@@ -187,6 +326,7 @@ export default function ChatRoom({ sessionId }: ChatRoomProps) {
            </CardFooter>
         )}
       </Card>
+      <audio ref={remoteVideoRef} autoPlay playsInline className="hidden"></audio>
     </div>
   );
 }

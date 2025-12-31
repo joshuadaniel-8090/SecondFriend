@@ -3,10 +3,11 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Stethoscope, Users, Lock, MessageSquare, ShieldCheck, Scalability, Zap, Instagram, Linkedin, Twitter, Facebook } from 'lucide-react';
+import { Users, Lock, MessageSquare, ShieldCheck, Scalability, Zap, Instagram, Linkedin, Twitter, Facebook } from 'lucide-react';
 import Header from '@/components/shared/Header';
 import { useAuth } from '@/components/auth/AuthProvider';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
+import Logo from '@/components/shared/Logo';
 
 export default function HomePage() {
   const { loading, user } = useAuth();
@@ -26,7 +27,7 @@ export default function HomePage() {
         {/* Hero Section */}
         <section className="bg-card w-full py-20 md:py-32">
           <div className="container mx-auto text-center px-4">
-            <Stethoscope className="mx-auto h-16 w-16 text-primary mb-4" />
+            <Logo className="mx-auto h-16 w-16 text-primary mb-4" />
             <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tighter mb-4">
               Empowering Student Wellness, Anonymously.
             </h1>
@@ -149,7 +150,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
                 <div className="flex items-center gap-2 text-primary mb-4 md:mb-0">
-                    <Stethoscope size={28} />
+                    <Logo className="h-7 w-7 text-primary" />
                     <h2 className="font-headline text-2xl font-bold">Second Friend</h2>
                 </div>
                 <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground mb-4 md:mb-0">
